@@ -6,7 +6,6 @@ rmi/out/
 
 # Runtime files
 deploy/local/.runtime/
-tests/results/
 *.log
 
 # OS / editor noise
