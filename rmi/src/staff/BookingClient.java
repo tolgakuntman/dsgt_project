@@ -1,14 +1,16 @@
 package staff;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.time.LocalDate;
 import java.util.Set;
 
 import hotel.BookingDetail;
-import hotel.BookingManager;
+import hotel.BookingService;
 
 public class BookingClient extends AbstractScriptedSimpleTest {
 
-	private BookingManager bm = null;
+	private BookingService bm = null;
 
 	public static void main(String[] args) throws Exception {
 		BookingClient client = new BookingClient();
@@ -20,35 +22,33 @@ public class BookingClient extends AbstractScriptedSimpleTest {
 	 ***************/
 	public BookingClient() {
 		try {
-			//Look up the registered remote instance
-			bm = new BookingManager();
+			String host = System.getenv().getOrDefault("RMI_HOST", "127.0.0.1");
+			int port = Integer.parseInt(System.getenv().getOrDefault("RMI_REGISTRY_PORT", "1099"));
+			String bindName = System.getenv().getOrDefault("RMI_BIND_NAME", "BookingService");
+			Registry registry = LocateRegistry.getRegistry(host, port);
+			bm = (BookingService) registry.lookup(bindName);
 		} catch (Exception exp) {
-			exp.printStackTrace();
+			throw new IllegalStateException("Failed to connect to RMI registry", exp);
 		}
 	}
 
 	@Override
-	public boolean isRoomAvailable(Integer roomNumber, LocalDate date) {
-		if(bm.isRoomAvailable(roomNumber, date)){
-			return true;
-		}
-		return false;
+	public boolean isRoomAvailable(Integer roomNumber, LocalDate date) throws Exception {
+		return bm.isRoomAvailable(roomNumber, date);
 	}
 
 	@Override
 	public void addBooking(BookingDetail bookingDetail) throws Exception {
-		if (isRoomAvailable(bookingDetail.getRoomNumber(), bookingDetail.getDate())){
-			bm.addBooking(bookingDetail);
-		}
+		bm.addBooking(bookingDetail);
 	}
 
 	@Override
-	public Set<Integer> getAvailableRooms(LocalDate date) {
+	public Set<Integer> getAvailableRooms(LocalDate date) throws Exception {
 		return bm.getAvailableRooms(date);
 	}
 
 	@Override
-	public Set<Integer> getAllRooms() {
+	public Set<Integer> getAllRooms() throws Exception {
 		return bm.getAllRooms();
 	}
 }

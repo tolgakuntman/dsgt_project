@@ -1,19 +1,25 @@
 package hotel;
 
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class BookingManager {
+public class BookingManager extends UnicastRemoteObject implements BookingService {
+
+	private static final long serialVersionUID = 1L;
 
 	private Room[] rooms;
 
-	public BookingManager() {
+	public BookingManager(int servicePort) throws RemoteException {
+		super(servicePort);
 		this.rooms = initializeRooms();
 	}
 
-	public Set<Integer> getAllRooms() {
+	@Override
+	public synchronized Set<Integer> getAllRooms() {
 		Set<Integer> allRooms = new HashSet<Integer>();
 		Iterable<Room> roomIterator = Arrays.asList(rooms);
 		for (Room room : roomIterator) {
@@ -22,7 +28,8 @@ public class BookingManager {
 		return allRooms;
 	}
 
-	public boolean isRoomAvailable(Integer roomNumber, LocalDate date) {
+	@Override
+	public synchronized boolean isRoomAvailable(Integer roomNumber, LocalDate date) {
 		for (Room room : rooms) {
 			if (room.getRoomNumber().equals(roomNumber)) {
 				for (BookingDetail booking : room.getBookings()) {
@@ -36,7 +43,13 @@ public class BookingManager {
 		return false;
 	}
 
-	public void addBooking(BookingDetail bookingDetail) {
+	@Override
+	public synchronized void addBooking(BookingDetail bookingDetail) throws RemoteException {
+		if (!isRoomAvailable(bookingDetail.getRoomNumber(), bookingDetail.getDate())) {
+			throw new RemoteException(
+				"Room " + bookingDetail.getRoomNumber() + " is not available on " + bookingDetail.getDate()
+			);
+		}
 		for (Room room : rooms) {
 			if (room.getRoomNumber().equals(bookingDetail.getRoomNumber())) {
 				room.getBookings().add(bookingDetail);
@@ -45,7 +58,8 @@ public class BookingManager {
 		}
 	}
 
-	public Set<Integer> getAvailableRooms(LocalDate date) {
+	@Override
+	public synchronized Set<Integer> getAvailableRooms(LocalDate date) {
 		Set<Integer> avaliableRooms = new HashSet<Integer>();
 		for(Room room : rooms){
 			if(isRoomAvailable(room.getRoomNumber(), date)){

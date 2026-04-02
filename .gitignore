@@ -1,6 +1,7 @@
 # Build output
 rest/target/
 soap/target/
+rmi/bin/
 rmi/out/
 
 # Runtime files
@@ -15,4 +16,5 @@ tests/results/
 
 # Java artifacts
 *.class
-tests/
+norway-east/
+*.pdf
